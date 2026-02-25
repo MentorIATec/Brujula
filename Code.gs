@@ -146,9 +146,10 @@ function onOpen() {
     .addItem('1. Generar Enlaces Personalizados', 'generateCustomLinks')
     .addItem('2. Enviar Invitacion Inicial', 'sendInitialInvitationEmails')
     .addItem('3. Enviar Recordatorios (Pendientes)', 'sendAutomaticReminders')
+    .addItem('4. Enviar Correo de Prueba', 'sendSingleTestEmail')
     .addSeparator()
-    .addItem('4. Ver Resumen Observabilidad V1', 'showObservabilitySummary')
-    .addItem('5. Poblar Campos Base (Students)', 'populateStudentsBaseFields')
+    .addItem('5. Ver Resumen Observabilidad V1', 'showObservabilitySummary')
+    .addItem('6. Poblar Campos Base (Students)', 'populateStudentsBaseFields')
     .addToUi();
 }
 
@@ -653,6 +654,67 @@ function sendInitialInvitationEmails() {
   });
 
   ui.alert('Invitaciones enviadas: ' + students.length);
+}
+
+function sendSingleTestEmail(email) {
+  const ui = SpreadsheetApp.getUi();
+  let targetEmail = String(email || '').trim().toLowerCase();
+
+  if (!targetEmail) {
+    const response = ui.prompt(
+      'Enviar correo de prueba',
+      'Escribe el correo destino para la prueba:',
+      ui.ButtonSet.OK_CANCEL
+    );
+    if (response.getSelectedButton() !== ui.Button.OK) {
+      ui.alert('Envío cancelado.');
+      return;
+    }
+    targetEmail = String(response.getResponseText() || '').trim().toLowerCase();
+  }
+
+  if (!targetEmail) {
+    ui.alert('Debes indicar un correo válido.');
+    return;
+  }
+
+  const students = getStudents_();
+  let student = students.find(function(s) {
+    return String(s.email || '').trim().toLowerCase() === targetEmail;
+  });
+
+  // Fallback para pruebas rápidas cuando el correo no está en Students.
+  if (!student) {
+    const firstName = targetEmail.split('@')[0] || 'estudiante';
+    student = {
+      email: targetEmail,
+      name: firstName,
+      matricula: '',
+      promedio_acumulado: '',
+      horas_servicio_social: '',
+      nivel_ingles: ''
+    };
+  }
+
+  const firstName = String(student.name || '').trim().split(' ')[0] || 'estudiante';
+  const link = CONFIG.WEB_APP_URL + '?email=' + encodeURIComponent(student.email) + '&name=' + encodeURIComponent(student.name || firstName);
+  const profileBlock = buildProfileSnapshotHtml_(student);
+  const htmlBody = renderEmailTemplate_('EmailInvitation', {
+    firstName: firstName,
+    profileBlock: profileBlock,
+    testLink: link,
+    whatsappLink: CONFIG.WHATSAPP_LINK,
+    openOfficeText: CONFIG.OPEN_OFFICE_TEXT,
+    headerImageUrl: CONFIG.EMAIL_HEADER_IMAGE_URL
+  });
+
+  MailApp.sendEmail({
+    to: targetEmail,
+    subject: '[PRUEBA] ' + firstName + ', revisemos tu avance de este semestre',
+    htmlBody: htmlBody
+  });
+
+  ui.alert('Correo de prueba enviado a: ' + targetEmail);
 }
 
 function logInvitationSent_(rowNumber) {

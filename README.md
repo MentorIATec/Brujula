@@ -73,6 +73,12 @@ Variables principales en `Code.gs > CONFIG`:
 4. Envia recordatorios a pendientes.
 5. Da seguimiento a `profile_scenario`, `score_total`, `interest_topic`.
 
+## 4.1 Prueba de correo antes de envío masivo
+- Menu `Brujula Unificada` > `4. Enviar Correo de Prueba`.
+- Ingresa un email destino.
+- El sistema envía la invitación con subject prefijado: `[PRUEBA] ...`.
+- Si el correo no existe en `Students`, envía versión de prueba con datos base vacíos.
+
 ## 5. Flujo funcional (V1)
 1. Estudiante entra por enlace personalizado.
 2. Selecciona etapa (`Exploracion` o `Enfoque`).
