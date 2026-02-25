@@ -149,7 +149,8 @@ function onOpen() {
     .addItem('4. Enviar Correo de Prueba', 'sendSingleTestEmail')
     .addSeparator()
     .addItem('5. Ver Resumen Observabilidad V1', 'showObservabilitySummary')
-    .addItem('6. Poblar Campos Base (Students)', 'populateStudentsBaseFields')
+    .addItem('6. Ver Resumen de Envíos', 'showDeliverySummary')
+    .addItem('7. Poblar Campos Base (Students)', 'populateStudentsBaseFields')
     .addToUi();
 }
 
@@ -628,8 +629,16 @@ function sendInitialInvitationEmails() {
   }
 
   const students = getStudents_();
+  const pendingInvitation = students.filter(function(student) {
+    return !student.invitation_sent_ts;
+  });
 
-  students.forEach(function(student) {
+  if (!pendingInvitation.length) {
+    ui.alert('No hay estudiantes nuevos pendientes de invitación inicial.');
+    return;
+  }
+
+  pendingInvitation.forEach(function(student) {
     const email = student.email;
     const firstName = student.name.split(' ')[0];
     const link = CONFIG.WEB_APP_URL + '?email=' + encodeURIComponent(student.email) + '&name=' + encodeURIComponent(student.name);
@@ -653,7 +662,10 @@ function sendInitialInvitationEmails() {
     Utilities.sleep(500);
   });
 
-  ui.alert('Invitaciones enviadas: ' + students.length);
+  ui.alert(
+    'Invitaciones enviadas: ' + pendingInvitation.length +
+    '\nYa contaban con invitación previa: ' + (students.length - pendingInvitation.length)
+  );
 }
 
 function sendSingleTestEmail(email) {
@@ -794,6 +806,7 @@ function getStudents_() {
       name: String(name).trim(),
       interaccion_crm: String(getCellByHeader_(row, index, ['interaccion crm']) || '').trim(),
       reminder_count: Number(getCellByHeader_(row, index, ['reminder_count']) || 0),
+      invitation_sent_ts: getCellByHeader_(row, index, ['invitation_sent_ts']),
       matricula: String(getCellByHeader_(row, index, ['matricula', 'matrícula']) || '').trim(),
       semestre: String(getCellByHeader_(row, index, ['semestre', 'semester']) || '').trim(),
       promedio_acumulado: String(getCellByHeader_(row, index, ['promedio acumulado', 'promedio']) || '').trim(),
@@ -975,6 +988,67 @@ function showObservabilitySummary() {
   const ui = SpreadsheetApp.getUi();
   const summary = buildObservabilitySummary_();
   ui.alert('Resumen Observabilidad V1', summary, ui.ButtonSet.OK);
+}
+
+function showDeliverySummary() {
+  const ui = SpreadsheetApp.getUi();
+  const summary = buildDeliverySummary_();
+  ui.alert('Resumen de Envíos', summary, ui.ButtonSet.OK);
+}
+
+function buildDeliverySummary_() {
+  const students = getStudents_();
+  const total = students.length;
+  if (!total) return 'No hay estudiantes en la hoja Students.';
+
+  let invited = 0;
+  let notInvited = 0;
+  let remindersSent = 0;
+  let studentsWithReminders = 0;
+  let maxReminderCount = 0;
+  let crmNoTotal = 0;
+  let crmNoInvited = 0;
+  let crmNoNotInvited = 0;
+
+  students.forEach(function(student) {
+    const sent = !!student.invitation_sent_ts;
+    const reminderCount = Number(student.reminder_count || 0);
+    const crmNo = normalizeHeader_(student.interaccion_crm) === 'no';
+
+    if (sent) invited += 1;
+    else notInvited += 1;
+
+    if (crmNo) {
+      crmNoTotal += 1;
+      if (sent) crmNoInvited += 1;
+      else crmNoNotInvited += 1;
+    }
+
+    if (reminderCount > 0) studentsWithReminders += 1;
+    remindersSent += reminderCount;
+    if (reminderCount > maxReminderCount) maxReminderCount = reminderCount;
+  });
+
+  const invitedRate = Math.round((invited / total) * 100);
+  const crmNoInvitedRate = crmNoTotal > 0 ? Math.round((crmNoInvited / crmNoTotal) * 100) : 0;
+
+  return [
+    'Total estudiantes: ' + total,
+    'Invitación inicial enviada: ' + invited,
+    'Pendientes de invitación inicial: ' + notInvited,
+    'Cobertura de invitación: ' + invitedRate + '%',
+    '',
+    'Recordatorios:',
+    '- Total recordatorios enviados: ' + remindersSent,
+    '- Estudiantes con al menos 1 recordatorio: ' + studentsWithReminders,
+    '- Máximo recordatorios a un estudiante: ' + maxReminderCount,
+    '',
+    'Segmento Interacción CRM = No:',
+    '- Total: ' + crmNoTotal,
+    '- Con invitación inicial: ' + crmNoInvited,
+    '- Sin invitación inicial: ' + crmNoNotInvited,
+    '- Cobertura del segmento: ' + crmNoInvitedRate + '%'
+  ].join('\n');
 }
 
 function buildObservabilitySummary_() {

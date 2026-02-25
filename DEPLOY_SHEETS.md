@@ -101,8 +101,9 @@ Ejecuta manualmente una función como `onOpen` o `generateCustomLinks` para acep
 1. Menú `1. Generar Enlaces Personalizados`.
 2. Menú `2. Enviar Invitación Inicial`.
 3. A las 24–48h, menú `3. Enviar Recordatorios (Pendientes)`.
-4. Menú `4. Ver Resumen Observabilidad V1`.
-5. Menú `5. Poblar Campos Base (Students)` para completar faltantes en:
+4. Menú `5. Ver Resumen Observabilidad V1`.
+5. Menú `6. Ver Resumen de Envíos`.
+6. Menú `7. Poblar Campos Base (Students)` para completar faltantes en:
 - `semestre`
 - `horas de servicio social`
 - `promedio acumulado`

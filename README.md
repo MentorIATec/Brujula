@@ -115,9 +115,10 @@ Se agrego medicion operativa minima para seguimiento semanal.
 
 ### Menu operativo
 En el menu del Sheet:
-- `4. Ver Resumen Observabilidad V1`
+- `5. Ver Resumen Observabilidad V1`
+- `6. Ver Resumen de Envíos`
 
-Este resumen muestra:
+`Resumen Observabilidad V1` muestra:
 - estudiantes en lista
 - estudiantes que respondieron
 - tasa de respuesta
@@ -125,6 +126,12 @@ Este resumen muestra:
 - promedio de tiempo de completado
 - estudiantes con prioridad seleccionada
 - clicks de prioridad desde correo
+
+`Resumen de Envíos` muestra:
+- cobertura de invitación inicial (enviados vs pendientes)
+- total de recordatorios enviados
+- estudiantes con recordatorios
+- métricas del segmento `Interacción CRM = No`
 
 ## 9. Regla de intentos
 - Cada estudiante puede responder la Brújula un maximo de 1 vez.
