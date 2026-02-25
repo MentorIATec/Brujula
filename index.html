@@ -1039,6 +1039,7 @@
     let activeQuestions      = [];
     let quizStartedAt        = null;
     const userAnswers        = {};
+    let gateCheckInProgress  = false;
 
     const attemptsUsed = Number((responseStats && responseStats.count) || 0);
     const rawMaxAttempts = Number(responseStats && responseStats.maxAllowed);
@@ -1117,6 +1118,41 @@
         .getResponseGateStatus(student.email);
     }
 
+    function checkGateBeforeStart(onAllowed) {
+      if (isLockedByAttempts) {
+        renderAlreadyState(previousResponse || {});
+        return;
+      }
+      if (gateCheckInProgress) return;
+      gateCheckInProgress = true;
+      startBtn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler((gate) => {
+          gateCheckInProgress = false;
+          const gateCount = Number(gate && gate.count);
+          const gateMaxRaw = Number(gate && gate.maxAllowed);
+          const gateMax = Number.isFinite(gateMaxRaw) && gateMaxRaw > 0 ? gateMaxRaw : 1;
+          if (gateCount >= gateMax) {
+            isLockedByAttempts = true;
+            renderAlreadyState((gate && gate.last) || previousResponse || {});
+            return;
+          }
+          if (typeof onAllowed === 'function') onAllowed();
+        })
+        .withFailureHandler((error) => {
+          gateCheckInProgress = false;
+          console.error(error);
+          // Conservative fallback: avoid opening quiz if gate check failed.
+          finalState.classList.remove('hidden');
+          finalLoading.classList.add('hidden');
+          finalContent.classList.add('hidden');
+          errorMessage.textContent = 'No pudimos validar tu acceso al test en este momento. Recarga e intenta de nuevo.';
+          errorMessage.classList.remove('hidden');
+        })
+        .getResponseGateStatus(student.email);
+    }
+
     function applyStageSelection(stage) {
       selectedStage = stage || '';
       document.querySelectorAll('.stage-card').forEach((el) => {
@@ -1134,24 +1170,22 @@
 
     /* ── START TEST ── */
     startBtn.addEventListener('click', () => {
-      if (isLockedByAttempts) {
-        renderAlreadyState(previousResponse || {});
-        return;
-      }
       if (!selectedStage) return;
-      activeQuestions      = resolvedQuestionBank[selectedStage] || [];
-      if (!activeQuestions.length) {
-        finalState.classList.remove('hidden');
-        finalLoading.classList.add('hidden');
-        finalContent.classList.add('hidden');
-        errorMessage.classList.remove('hidden');
-        return;
-      }
-      quizStartedAt = new Date();
-      currentQuestionIndex = 0;
-      welcomeState.classList.add('hidden');
-      quizState.classList.remove('hidden');
-      renderQuestion();
+      checkGateBeforeStart(() => {
+        activeQuestions = resolvedQuestionBank[selectedStage] || [];
+        if (!activeQuestions.length) {
+          finalState.classList.remove('hidden');
+          finalLoading.classList.add('hidden');
+          finalContent.classList.add('hidden');
+          errorMessage.classList.remove('hidden');
+          return;
+        }
+        quizStartedAt = new Date();
+        currentQuestionIndex = 0;
+        welcomeState.classList.add('hidden');
+        quizState.classList.remove('hidden');
+        renderQuestion();
+      });
     });
 
     /* ── NAVIGATION ── */
