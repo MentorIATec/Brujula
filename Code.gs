@@ -8,6 +8,7 @@ const CONFIG = {
   WHATSAPP_LINK: 'https://wa.me/5218128612913',
   CALENDLY_LINK: 'https://calendly.com/karenkrei/charla-1-a-1',
   OPEN_OFFICE_TEXT: 'Open Office todos los jueves, 9:30 a 16:00, en Centrales Sur 3er piso. Avísame por WhatsApp antes de pasar.',
+  PRIVACY_POLICY_URL: 'https://tec.mx/es/aviso-de-privacidad-alumnos',
   EMAIL_HEADER_IMAGE_URL: 'https://cdn.jsdelivr.net/gh/MentorIATec/Brujula@main/assets/image.png'
 };
 
@@ -168,6 +169,10 @@ function doGet(e) {
   const responseStats = getResponseStatsByEmail_(email);
   const studentProfile = getStudentProfileByEmail_(email);
   const template = HtmlService.createTemplateFromFile('index');
+  const whatsappPrefill = buildWhatsappLink_(
+    CONFIG.WHATSAPP_LINK,
+    'Hola, Karen, ya contesté el test y sí me gustaría platicar de mis resultados contigo'
+  );
   template.email = email;
   template.name = name;
   template.questionBankJson = JSON.stringify(QUESTION_BANK);
@@ -177,6 +182,9 @@ function doGet(e) {
     count: responseStats.count,
     maxAllowed: MAX_SUBMISSIONS_PER_EMAIL
   });
+  template.whatsappLinkJson = JSON.stringify(CONFIG.WHATSAPP_LINK);
+  template.whatsappResultLinkJson = JSON.stringify(whatsappPrefill);
+  template.privacyPolicyUrlJson = JSON.stringify(CONFIG.PRIVACY_POLICY_URL);
 
   return template
     .evaluate()
@@ -428,6 +436,10 @@ function sendStudentEmail_(record, topTwo) {
   const topic1Action = getTopicActionText_(topic1);
   const topic2Action = getTopicActionText_(topic2);
   const whatsappLink = CONFIG.WHATSAPP_LINK;
+  const whatsappResultLink = buildWhatsappLink_(
+    CONFIG.WHATSAPP_LINK,
+    'Hola, Karen, ya contesté el test y sí me gustaría platicar de mis resultados contigo'
+  );
   const stageLabel = record.stage_label || record.stage || 'Sin etapa';
   const scenarioLabel = getScenarioLabel_(record.profile_scenario);
   const legacyPrioritySection = CONFIG.ENABLE_PRIORITY_BUTTONS
@@ -441,7 +453,8 @@ function sendStudentEmail_(record, topTwo) {
     topic1Action: topic1Action,
     topic2Action: topic2Action,
     legacyPrioritySection: legacyPrioritySection,
-    whatsappLink: whatsappLink,
+    whatsappLink: whatsappResultLink,
+    whatsappDirectLink: whatsappLink,
     calendlyLink: CONFIG.CALENDLY_LINK,
     openOfficeText: CONFIG.OPEN_OFFICE_TEXT
   });
@@ -518,6 +531,15 @@ function renderEmailTemplate_(templateName, data) {
     template[key] = data[key];
   });
   return template.evaluate().getContent();
+}
+
+function buildWhatsappLink_(baseLink, messageText) {
+  const base = String(baseLink || '').trim();
+  if (!base) return '';
+  const text = String(messageText || '').trim();
+  if (!text) return base;
+  const separator = base.indexOf('?') >= 0 ? '&' : '?';
+  return base + separator + 'text=' + encodeURIComponent(text);
 }
 
 function registerInterest_(params) {

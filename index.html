@@ -515,6 +515,18 @@
       color: var(--ink-500);
       line-height: 1.45;
     }
+    .data-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--ink-500);
+      line-height: 1.55;
+    }
+    .data-note a {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
 
     .status-box p {
       color: var(--ink-500);
@@ -682,6 +694,14 @@
         <button id="start-btn" class="cta" disabled aria-label="Iniciar mi diagnóstico de mentoría">
           Iniciar mi diagnóstico →
         </button>
+        <p class="data-note">
+          Uso de datos estrictamente institucional para mentoría estudiantil, acompañamiento de trayectoria académica y cuidado del bienestar.
+          Consulta el
+          <a id="privacy-link" href="https://tec.mx/es/aviso-de-privacidad-alumnos" target="_blank" rel="noopener noreferrer">aviso de privacidad para alumnos</a>.
+        </p>
+        <p class="data-note" style="margin-top:6px;">
+          Si aparece un aviso de Google Apps Script al abrir el enlace, es normal. Da clic en continuar.
+        </p>
       </section>
 
       <!-- ── QUIZ STATE ── -->
@@ -725,7 +745,7 @@
         <div id="final-loading">
           <div class="spinner" role="status" aria-label="Procesando tus respuestas"></div>
           <p class="spinner-label">Procesando tus respuestas…</p>
-          <a href="https://wa.me/5218128612913" target="_blank" rel="noopener noreferrer" class="loading-cta">
+          <a id="loading-whatsapp-link" href="https://wa.me/5218128612913" target="_blank" rel="noopener noreferrer" class="loading-cta">
             Agenda desde ahora con tu mentora →
           </a>
         </div>
@@ -739,7 +759,7 @@
             <div id="score-ring" class="score-ring" aria-label="Puntaje total"></div>
           </div>
           <p id="result-copy" class="result-copy-main"></p>
-          <a href="https://wa.me/5218128612913"
+          <a id="result-whatsapp-link" href="https://wa.me/5218128612913"
              target="_blank" rel="noopener noreferrer"
              class="mentor-cta"
              aria-label="Abrir WhatsApp para agendar sesión con tu mentora">
@@ -766,7 +786,7 @@
         <div id="already-score" class="score-ring" aria-label="Puntaje previo"></div>
         <p id="already-copy"></p>
         <p>Tu mentora ya puede ver tu perfil. Si ya tienes sesión agendada, llega con una pregunta concreta para aprovechar mejor la conversación.</p>
-        <a href="https://wa.me/5218128612913"
+        <a id="already-whatsapp-link" href="https://wa.me/5218128612913"
            target="_blank" rel="noopener noreferrer"
            class="mentor-cta"
            aria-label="Abrir WhatsApp para escribirle a tu mentora">
@@ -796,6 +816,9 @@
     const previousResponse = <?= previousResponseJson ?>;
     const responseStats    = <?= responseStatsJson ?>;
     const studentProfile   = <?= studentProfileJson ?>;
+    const whatsappLink     = <?= whatsappLinkJson ?>;
+    const whatsappResultLink = <?= whatsappResultLinkJson ?>;
+    const privacyPolicyUrl = <?= privacyPolicyUrlJson ?>;
 
     /* ── DOM REFS ── */
     const welcomeState      = document.getElementById('welcome-state');
@@ -827,6 +850,10 @@
     const changeStageModal  = document.getElementById('change-stage-modal');
     const modalCancelBtn    = document.getElementById('change-stage-cancel');
     const modalConfirmBtn   = document.getElementById('change-stage-confirm');
+    const loadingWhatsappLink = document.getElementById('loading-whatsapp-link');
+    const resultWhatsappLink  = document.getElementById('result-whatsapp-link');
+    const alreadyWhatsappLink = document.getElementById('already-whatsapp-link');
+    const privacyLink         = document.getElementById('privacy-link');
 
     /* ── CONSTANTS ── */
     const SCENARIO_LABELS = {
@@ -847,6 +874,11 @@
       exploracion: 'avenida',
       enfoque:     'carrera_definida'
     };
+
+    if (loadingWhatsappLink) loadingWhatsappLink.href = whatsappResultLink || whatsappLink;
+    if (resultWhatsappLink) resultWhatsappLink.href = whatsappResultLink || whatsappLink;
+    if (alreadyWhatsappLink) alreadyWhatsappLink.href = whatsappResultLink || whatsappLink;
+    if (privacyLink) privacyLink.href = privacyPolicyUrl;
 
     /* ── HERO GREETING ── */
     const normalizedName = (student.name || '').trim();
