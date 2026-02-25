@@ -564,6 +564,19 @@
       color: var(--accent);
       border: 1px solid #b8d5f2;
     }
+    .done-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e8f8f2;
+      color: #166534;
+      border: 1px solid #9fe3be;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 2px 0 10px;
+    }
 
     /* ── SPINNER ── */
     .spinner {
@@ -772,10 +785,10 @@
             <div id="score-ring" class="score-ring" aria-label="Puntaje total"></div>
           </div>
           <p id="result-copy" class="result-copy-main"></p>
-          <a id="result-whatsapp-link" href="https://wa.me/5218128612913"
+          <a id="result-calendly-link" href="https://calendly.com/karenkrei/charla-1-a-1"
              target="_blank" rel="noopener noreferrer"
              class="mentor-cta"
-             aria-label="Abrir WhatsApp para agendar sesión con tu mentora">
+             aria-label="Abrir Calendly para agendar sesión con tu mentora">
             Agenda tu sesión →
           </a>
           <p class="office-note">Open Office todos los jueves, 9:30 a 16:00, Centrales Sur 3er piso. Avísame por WhatsApp antes de pasar.</p>
@@ -794,6 +807,7 @@
       <section id="already-state" class="status-box hidden"
                aria-label="Diagnóstico previo encontrado">
         <span class="status-icon" aria-hidden="true">📌</span>
+        <p class="done-pill" aria-label="Brújula completada">✅ Ya completaste tu Brújula</p>
         <h2>Ya tenemos tu punto de partida</h2>
         <div id="already-chip" class="scenario-chip"></div>
         <div id="already-score" class="score-ring" aria-label="Puntaje previo"></div>
@@ -873,7 +887,7 @@
     const modalCancelBtn    = document.getElementById('change-stage-cancel');
     const modalConfirmBtn   = document.getElementById('change-stage-confirm');
     const loadingWhatsappLink = document.getElementById('loading-whatsapp-link');
-    const resultWhatsappLink  = document.getElementById('result-whatsapp-link');
+    const resultCalendlyLink  = document.getElementById('result-calendly-link');
     const alreadyWhatsappLink = document.getElementById('already-whatsapp-link');
     const alreadyCalendlyLink = document.getElementById('already-calendly-link');
     const privacyLink         = document.getElementById('privacy-link');
@@ -899,7 +913,7 @@
     };
 
     if (loadingWhatsappLink) loadingWhatsappLink.href = whatsappResultLink || whatsappLink;
-    if (resultWhatsappLink) resultWhatsappLink.href = whatsappResultLink || whatsappLink;
+    if (resultCalendlyLink) resultCalendlyLink.href = calendlyLink;
     if (alreadyWhatsappLink) alreadyWhatsappLink.href = whatsappResultLink || whatsappLink;
     if (alreadyCalendlyLink) alreadyCalendlyLink.href = calendlyLink;
     if (privacyLink) privacyLink.href = privacyPolicyUrl;
