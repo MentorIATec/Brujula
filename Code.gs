@@ -7,7 +7,7 @@ const CONFIG = {
   ENABLE_PRIORITY_BUTTONS: false,
   WHATSAPP_LINK: 'https://wa.me/5218128612913',
   OPEN_OFFICE_TEXT: 'Open Office todos los jueves, 9:30 a 16:00, en Centrales Sur 3er piso. Avísame por WhatsApp antes de pasar.',
-  EMAIL_HEADER_IMAGE_URL: 'https://cdn.jsdelivr.net/gh/MentorIATec/Brujula@main/assets/Codigo-1-1024x631.jpg'
+  EMAIL_HEADER_IMAGE_URL: 'https://cdn.jsdelivr.net/gh/MentorIATec/Brujula@main/assets/image.png'
 };
 
 const STAGE_LABELS = {
@@ -15,7 +15,7 @@ const STAGE_LABELS = {
   enfoque: 'Enfoque'
 };
 const MAX_SUBMISSIONS_PER_EMAIL = 1;
-const STUDENT_TRACKING_HEADERS = ['Interacción CRM', 'reminder_count', 'invitation_variant', 'invitation_sent_ts'];
+const STUDENT_TRACKING_HEADERS = ['Interacción CRM', 'reminder_count', 'invitation_sent_ts'];
 
 const RESPONSE_HEADERS = [
   'submission_ts',
@@ -593,27 +593,21 @@ function sendInitialInvitationEmails() {
     const firstName = student.name.split(' ')[0];
     const link = CONFIG.WEB_APP_URL + '?email=' + encodeURIComponent(student.email) + '&name=' + encodeURIComponent(student.name);
     const profileBlock = buildProfileSnapshotHtml_(student);
-    const variant = getInvitationVariant_(student.rowNumber);
-    const copy = getInvitationCopyByVariant_(variant, firstName);
     const htmlBody = renderEmailTemplate_('EmailInvitation', {
       firstName: firstName,
       profileBlock: profileBlock,
       testLink: link,
       whatsappLink: CONFIG.WHATSAPP_LINK,
       openOfficeText: CONFIG.OPEN_OFFICE_TEXT,
-      headerImageUrl: CONFIG.EMAIL_HEADER_IMAGE_URL,
-      introLead: copy.introLead,
-      introBody: copy.introBody,
-      closeLine: copy.closeLine,
-      ctaLabel: copy.ctaLabel
+      headerImageUrl: CONFIG.EMAIL_HEADER_IMAGE_URL
     });
 
     MailApp.sendEmail({
       to: email,
-      subject: copy.subject,
+      subject: firstName + ', revisemos tu avance de este semestre',
       htmlBody: htmlBody
     });
-    logInvitationVariant_(student.rowNumber, variant);
+    logInvitationSent_(student.rowNumber);
 
     Utilities.sleep(500);
   });
@@ -621,39 +615,13 @@ function sendInitialInvitationEmails() {
   ui.alert('Invitaciones enviadas: ' + students.length);
 }
 
-function getInvitationVariant_(rowNumber) {
-  return (Number(rowNumber) % 2 === 0) ? 'B' : 'A';
-}
-
-function getInvitationCopyByVariant_(variant, firstName) {
-  const safeName = String(firstName || 'estudiante').trim();
-  if (variant === 'B') {
-    return {
-      subject: safeName + ', te escribo para revisar tu avance y próximos pasos',
-      introLead: 'Como tu mentora, estoy dando seguimiento a tu avance académico semestre a semestre.',
-      introBody: 'Además de este avance, hay decisiones importantes por contemplar (carrera, Semestre Tec, servicio social e inglés). Te comparto este test breve para detectar si hay algo que necesitemos ajustar juntas/os.',
-      closeLine: '¿Cómo te sientes?, ¿hay algo que quieras conversar? Contesta el test y agendamos una cita.',
-      ctaLabel: 'Revisar mi avance en el test'
-    };
-  }
-  return {
-    subject: safeName + ', revisemos tu avance de este semestre',
-    introLead: 'Estoy revisando tu progreso académico y quiero acompañarte en tus siguientes decisiones.',
-    introBody: 'Con este test breve (2 minutos) podremos ver tu punto actual y definir un siguiente paso concreto de mentoría.',
-    closeLine: 'Si algo te preocupa o quieres conversar, contesta el test y hacemos una cita.',
-    ctaLabel: 'Contestar test y agendar cita'
-  };
-}
-
-function logInvitationVariant_(rowNumber, variant) {
+function logInvitationSent_(rowNumber) {
   const sheet = SpreadsheetApp.openById(CONFIG.SHEET_ID).getSheetByName(CONFIG.STUDENTS_SHEET_NAME);
   if (!sheet || !rowNumber) return;
   ensureStudentTrackingHeaders_(sheet);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const idx = buildHeaderIndex_(headers);
-  const variantCol = idx['invitation_variant'];
   const sentTsCol = idx['invitation_sent_ts'];
-  if (variantCol) sheet.getRange(rowNumber, variantCol).setValue(variant);
   if (sentTsCol) sheet.getRange(rowNumber, sentTsCol).setValue(new Date());
 }
 
