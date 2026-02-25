@@ -6,6 +6,7 @@ const CONFIG = {
   VERSION: 'v1.0-unificada',
   ENABLE_PRIORITY_BUTTONS: false,
   WHATSAPP_LINK: 'https://wa.me/5218128612913',
+  CALENDLY_LINK: 'https://calendly.com/karenkrei/charla-1-a-1',
   OPEN_OFFICE_TEXT: 'Open Office todos los jueves, 9:30 a 16:00, en Centrales Sur 3er piso. Avísame por WhatsApp antes de pasar.',
   EMAIL_HEADER_IMAGE_URL: 'https://cdn.jsdelivr.net/gh/MentorIATec/Brujula@main/assets/image.png'
 };
@@ -441,6 +442,7 @@ function sendStudentEmail_(record, topTwo) {
     topic2Action: topic2Action,
     legacyPrioritySection: legacyPrioritySection,
     whatsappLink: whatsappLink,
+    calendlyLink: CONFIG.CALENDLY_LINK,
     openOfficeText: CONFIG.OPEN_OFFICE_TEXT
   });
 
