@@ -418,7 +418,7 @@ function getResponseStatsByEmail_(email) {
 
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
-  const emailIdx = headers.indexOf('email');
+  const emailIdx = getResponseEmailColIndex_(headers);
   if (emailIdx < 0) {
     return {count: 0, last: null};
   }
@@ -982,7 +982,10 @@ function getRespondedEmails_() {
     return new Set();
   }
 
-  const data = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues();
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const emailIdx = getResponseEmailColIndex_(headers);
+  if (emailIdx < 0) return new Set();
+  const data = sheet.getRange(2, emailIdx + 1, sheet.getLastRow() - 1, 1).getValues();
   const set = new Set();
 
   data.forEach(function(row) {
@@ -1074,7 +1077,7 @@ function buildObservabilitySummary_() {
   const headers = data[0];
   const rows = data.slice(1);
 
-  const idxEmail = headers.indexOf('email');
+  const idxEmail = getResponseEmailColIndex_(headers);
   const idxScenario = headers.indexOf('profile_scenario');
   const idxSeconds = headers.indexOf('completion_seconds');
   const idxInterest = headers.indexOf('interest_topic');
@@ -1151,4 +1154,15 @@ function buildObservabilitySummary_() {
     'Estudiantes con prioridad seleccionada: ' + interestSelected,
     'Clicks de prioridad desde correo: ' + priorityClicks
   ].join('\n');
+}
+
+function getResponseEmailColIndex_(headers) {
+  if (!headers || !headers.length) return -1;
+  for (var i = 0; i < headers.length; i++) {
+    const h = normalizeHeader_(headers[i]);
+    if (h === 'email' || h === 'correo' || h === 'mail') {
+      return i;
+    }
+  }
+  return -1;
 }
