@@ -424,6 +424,8 @@ function sendStudentEmail_(record, topTwo) {
   const firstName = record.name.split(' ')[0];
   const topic1 = topTwo[0] ? topTwo[0].label : 'tu avance académico';
   const topic2 = topTwo[1] ? topTwo[1].label : 'tu siguiente decisión';
+  const topic1Action = getTopicActionText_(topic1);
+  const topic2Action = getTopicActionText_(topic2);
   const whatsappLink = CONFIG.WHATSAPP_LINK;
   const stageLabel = record.stage_label || record.stage || 'Sin etapa';
   const scenarioLabel = getScenarioLabel_(record.profile_scenario);
@@ -435,8 +437,8 @@ function sendStudentEmail_(record, topTwo) {
     scoreTotal: record.score_total,
     scenarioLabel: scenarioLabel,
     stageLabel: stageLabel,
-    topic1: topic1,
-    topic2: topic2,
+    topic1Action: topic1Action,
+    topic2Action: topic2Action,
     legacyPrioritySection: legacyPrioritySection,
     whatsappLink: whatsappLink,
     openOfficeText: CONFIG.OPEN_OFFICE_TEXT
@@ -447,6 +449,20 @@ function sendStudentEmail_(record, topTwo) {
     subject: firstName + ', tu Brújula está lista',
     htmlBody: htmlBody
   });
+}
+
+function getTopicActionText_(topicLabel) {
+  const topic = String(topicLabel || '').trim().toLowerCase();
+  const map = {
+    'desempeño académico': 'fortalecer tu desempeño académico',
+    'servicio social': 'avanzar en tu servicio social',
+    'claridad de carrera de egreso': 'clarificar tu decisión de carrera de egreso',
+    'planeación de prácticas': 'definir tu plan para prácticas',
+    'decisión de semestre tec': 'concretar tu decisión de Semestre Tec',
+    'certificación de idioma': 'planear tu certificación de idioma',
+    'preparación para prácticas': 'fortalecer tu preparación para prácticas'
+  };
+  return map[topic] || ('avanzar en ' + String(topicLabel || 'tu siguiente paso').toLowerCase());
 }
 
 function getScenarioLabel_(scenario) {
