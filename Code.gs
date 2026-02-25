@@ -257,6 +257,16 @@ function processWebAppSubmission(payload) {
   }
 }
 
+function getResponseGateStatus(email) {
+  const cleanEmail = String(email || '').trim();
+  const stats = getResponseStatsByEmail_(cleanEmail);
+  return {
+    count: stats.count,
+    maxAllowed: MAX_SUBMISSIONS_PER_EMAIL,
+    last: stats.last || null
+  };
+}
+
 function normalizeStage_(stage) {
   const clean = String(stage || '').toLowerCase().trim();
   if (!QUESTION_BANK[clean]) {

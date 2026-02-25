@@ -1043,6 +1043,7 @@
     const attemptsUsed = Number((responseStats && responseStats.count) || 0);
     const rawMaxAttempts = Number(responseStats && responseStats.maxAllowed);
     const maxAttempts = Number.isFinite(rawMaxAttempts) && rawMaxAttempts > 0 ? rawMaxAttempts : 1;
+    let isLockedByAttempts = attemptsUsed >= maxAttempts;
     if (attemptCopy && attemptsUsed > 0) {
       attemptCopy.textContent = `Esta brújula se responde una sola vez para trabajar con tu perfil real junto a tu mentora.`;
     } else if (attemptCopy) {
@@ -1096,8 +1097,24 @@
     }
 
     /* ── ATTEMPT LIMIT CHECK ── */
-    if (attemptsUsed >= maxAttempts) {
+    if (isLockedByAttempts) {
       renderAlreadyState(previousResponse || {});
+    }
+
+    // Guard in real-time with backend data to avoid stale/client-cached stats.
+    if (student && student.email && google && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler((gate) => {
+          const gateCount = Number(gate && gate.count);
+          const gateMaxRaw = Number(gate && gate.maxAllowed);
+          const gateMax = Number.isFinite(gateMaxRaw) && gateMaxRaw > 0 ? gateMaxRaw : 1;
+          if (gateCount >= gateMax) {
+            isLockedByAttempts = true;
+            renderAlreadyState((gate && gate.last) || previousResponse || {});
+          }
+        })
+        .withFailureHandler(() => {})
+        .getResponseGateStatus(student.email);
     }
 
     function applyStageSelection(stage) {
@@ -1117,6 +1134,10 @@
 
     /* ── START TEST ── */
     startBtn.addEventListener('click', () => {
+      if (isLockedByAttempts) {
+        renderAlreadyState(previousResponse || {});
+        return;
+      }
       if (!selectedStage) return;
       activeQuestions      = resolvedQuestionBank[selectedStage] || [];
       if (!activeQuestions.length) {
