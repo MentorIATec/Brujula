@@ -1041,7 +1041,8 @@
     const userAnswers        = {};
 
     const attemptsUsed = Number((responseStats && responseStats.count) || 0);
-    const maxAttempts = Number((responseStats && responseStats.maxAllowed) || 2);
+    const rawMaxAttempts = Number(responseStats && responseStats.maxAllowed);
+    const maxAttempts = Number.isFinite(rawMaxAttempts) && rawMaxAttempts > 0 ? rawMaxAttempts : 1;
     if (attemptCopy && attemptsUsed > 0) {
       attemptCopy.textContent = `Esta brújula se responde una sola vez para trabajar con tu perfil real junto a tu mentora.`;
     } else if (attemptCopy) {
@@ -1066,17 +1067,32 @@
 
     function renderAlreadyState(lastResponse) {
       const last = lastResponse || {};
-      const scenario   = last.profile_scenario || 'Desarrollo';
-      const score      = last.score_total != null ? last.score_total : '–';
-      const stageLabel = last.stage_label || last.stage || 'Sin etapa';
+      const hasScenario = !!last.profile_scenario;
+      const hasScore = last.score_total != null && String(last.score_total).trim() !== '';
+      const hasStage = !!(last.stage_label || last.stage);
 
       welcomeState.classList.add('hidden');
       quizState.classList.add('hidden');
       finalState.classList.add('hidden');
       alreadyState.classList.remove('hidden');
-      alreadyChip.textContent  = SCENARIO_LABELS[scenario] || scenario;
-      alreadyScore.textContent = score + '/100';
-      alreadyCopy.textContent  = `Ya alcanzaste tus ${maxAttempts} respuestas. Último registro: etapa ${stageLabel}, puntaje ${score}/100. Tu mentora ya tiene tu perfil visible.`;
+
+      if (hasScenario && hasScore) {
+        const scenario = last.profile_scenario;
+        alreadyChip.textContent = SCENARIO_LABELS[scenario] || scenario;
+        alreadyChip.style.display = 'inline-flex';
+        alreadyScore.textContent = `${last.score_total}/100`;
+        alreadyScore.style.display = 'inline-flex';
+      } else {
+        alreadyChip.style.display = 'none';
+        alreadyScore.style.display = 'none';
+      }
+
+      if (hasStage && hasScore) {
+        const stageLabel = last.stage_label || last.stage;
+        alreadyCopy.textContent = `Ya completaste esta brújula. Último registro: etapa ${stageLabel}, puntaje ${last.score_total}/100. Tu mentora ya tiene tu perfil visible.`;
+      } else {
+        alreadyCopy.textContent = 'Ya completaste esta brújula. Tu mentora ya tiene tu perfil visible.';
+      }
     }
 
     /* ── ATTEMPT LIMIT CHECK ── */
