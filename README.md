@@ -129,7 +129,21 @@ Este resumen muestra:
 En `Students` agrega/usa estas columnas operativas:
 - `Interacción CRM`: valores sugeridos `Si` / `No`
 - `reminder_count`: contador de recordatorios enviados (autogestionado por script)
+- `invitation_variant`: variante de invitación enviada (`A`/`B`)
+- `invitation_sent_ts`: fecha/hora de envío de invitación inicial
 
 Uso:
 - El resumen `Observabilidad V1` ahora reporta especificamente la poblacion `Interacción CRM = No` (respondieron vs pendientes).
 - Los recordatorios se envian con subject numerado: `Recordatorio #N`.
+
+## 11. A/B de invitación inicial
+`sendInitialInvitationEmails()` alterna automáticamente dos variantes:
+- Variante `A` para filas impares.
+- Variante `B` para filas pares.
+
+Cambian:
+- Subject del correo.
+- Primer bloque de narrativa (apertura y llamado).
+- Texto del CTA.
+
+El script guarda variante y timestamp en `Students` para análisis posterior.
