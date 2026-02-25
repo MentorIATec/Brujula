@@ -552,6 +552,18 @@
 
     .mentor-cta:hover { filter: brightness(1.07); transform: translateY(-1px); }
     .mentor-cta:focus-visible { outline: 3px solid #78b0e8; outline-offset: 3px; }
+    .cta-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .mentor-cta.secondary {
+      background: #eef4ff;
+      color: var(--accent);
+      border: 1px solid #b8d5f2;
+    }
 
     /* ── SPINNER ── */
     .spinner {
@@ -642,6 +654,7 @@
       .cta { font-size: 15px; padding: 13px; }
       .status-box { padding: 26px 16px 24px; }
       .mentor-cta { width: 100%; text-align: center; }
+      .cta-group { gap: 8px; }
       .progress-tools { min-width: 130px; justify-content: flex-end; }
       .progress-label { min-width: auto; font-size: 10px; }
       .result-meta { display: flex; justify-content: center; width: 100%; }
@@ -785,13 +798,21 @@
         <div id="already-chip" class="scenario-chip"></div>
         <div id="already-score" class="score-ring" aria-label="Puntaje previo"></div>
         <p id="already-copy"></p>
-        <p>Tu mentora ya puede ver tu perfil. Si ya tienes sesión agendada, llega con una pregunta concreta para aprovechar mejor la conversación.</p>
-        <a id="already-whatsapp-link" href="https://wa.me/5218128612913"
-           target="_blank" rel="noopener noreferrer"
-           class="mentor-cta"
-           aria-label="Abrir WhatsApp para escribirle a tu mentora">
-          Escríbele a tu mentora →
-        </a>
+        <p>Tu mentora ya puede ver tu perfil. El siguiente paso es conversar para definir acciones concretas.</p>
+        <div class="cta-group">
+          <a id="already-calendly-link" href="https://calendly.com/karenkrei/charla-1-a-1"
+             target="_blank" rel="noopener noreferrer"
+             class="mentor-cta"
+             aria-label="Abrir Calendly para agendar cita uno a uno">
+            Agendar cita 1 a 1 →
+          </a>
+          <a id="already-whatsapp-link" href="https://wa.me/5218128612913"
+             target="_blank" rel="noopener noreferrer"
+             class="mentor-cta secondary"
+             aria-label="Abrir WhatsApp para contactar a tu mentora">
+            Contactar a mi mentora →
+          </a>
+        </div>
         <p class="office-note">Open Office todos los jueves, 9:30 a 16:00, Centrales Sur 3er piso. Avísame por WhatsApp antes de pasar.</p>
       </section>
 
@@ -819,6 +840,7 @@
     const whatsappLink     = <?= whatsappLinkJson ?>;
     const whatsappResultLink = <?= whatsappResultLinkJson ?>;
     const privacyPolicyUrl = <?= privacyPolicyUrlJson ?>;
+    const calendlyLink     = <?= calendlyLinkJson ?>;
 
     /* ── DOM REFS ── */
     const welcomeState      = document.getElementById('welcome-state');
@@ -853,6 +875,7 @@
     const loadingWhatsappLink = document.getElementById('loading-whatsapp-link');
     const resultWhatsappLink  = document.getElementById('result-whatsapp-link');
     const alreadyWhatsappLink = document.getElementById('already-whatsapp-link');
+    const alreadyCalendlyLink = document.getElementById('already-calendly-link');
     const privacyLink         = document.getElementById('privacy-link');
 
     /* ── CONSTANTS ── */
@@ -878,6 +901,7 @@
     if (loadingWhatsappLink) loadingWhatsappLink.href = whatsappResultLink || whatsappLink;
     if (resultWhatsappLink) resultWhatsappLink.href = whatsappResultLink || whatsappLink;
     if (alreadyWhatsappLink) alreadyWhatsappLink.href = whatsappResultLink || whatsappLink;
+    if (alreadyCalendlyLink) alreadyCalendlyLink.href = calendlyLink;
     if (privacyLink) privacyLink.href = privacyPolicyUrl;
 
     /* ── HERO GREETING ── */
@@ -1017,19 +1041,24 @@
       profileSnapshot.style.display = 'block';
     }
 
-    /* ── ATTEMPT LIMIT CHECK ── */
-    if (attemptsUsed >= maxAttempts) {
+    function renderAlreadyState(lastResponse) {
+      const last = lastResponse || {};
+      const scenario   = last.profile_scenario || 'Desarrollo';
+      const score      = last.score_total != null ? last.score_total : '–';
+      const stageLabel = last.stage_label || last.stage || 'Sin etapa';
+
       welcomeState.classList.add('hidden');
+      quizState.classList.add('hidden');
+      finalState.classList.add('hidden');
       alreadyState.classList.remove('hidden');
-      const lastResponse = previousResponse || {};
-
-      const scenario   = lastResponse.profile_scenario || 'Desarrollo';
-      const score      = lastResponse.score_total != null ? lastResponse.score_total : '–';
-      const stageLabel = lastResponse.stage_label || lastResponse.stage || 'Sin etapa';
-
       alreadyChip.textContent  = SCENARIO_LABELS[scenario] || scenario;
       alreadyScore.textContent = score + '/100';
       alreadyCopy.textContent  = `Ya alcanzaste tus ${maxAttempts} respuestas. Último registro: etapa ${stageLabel}, puntaje ${score}/100. Tu mentora ya tiene tu perfil visible.`;
+    }
+
+    /* ── ATTEMPT LIMIT CHECK ── */
+    if (attemptsUsed >= maxAttempts) {
+      renderAlreadyState(previousResponse || {});
     }
 
     function applyStageSelection(stage) {
@@ -1220,6 +1249,10 @@
           clearTimeout(submitTimeout);
           console.error(error);
           const rawMsg = (error && error.message) ? String(error.message) : '';
+          if (rawMsg.indexOf('Ya registraste tu respuesta') !== -1) {
+            renderAlreadyState(previousResponse || {});
+            return;
+          }
           errorMessage.textContent = mapUserFacingError(rawMsg);
           finalLoading.classList.add('hidden');
           errorMessage.classList.remove('hidden');
