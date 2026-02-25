@@ -170,6 +170,21 @@ function doGet(e) {
 
   const responseStats = getResponseStatsByEmail_(email);
   const studentProfile = getStudentProfileByEmail_(email);
+  if (responseStats.count >= MAX_SUBMISSIONS_PER_EMAIL) {
+    const blockedTemplate = HtmlService.createTemplateFromFile('BlockedView');
+    blockedTemplate.name = name;
+    blockedTemplate.lastResponseJson = JSON.stringify(responseStats.last || {});
+    blockedTemplate.whatsappResultLink = buildWhatsappLink_(
+      CONFIG.WHATSAPP_LINK,
+      'Hola, Karen, ya contesté el test y sí me gustaría platicar de mis resultados contigo'
+    );
+    blockedTemplate.calendlyLink = CONFIG.CALENDLY_LINK;
+    blockedTemplate.openOfficeText = CONFIG.OPEN_OFFICE_TEXT;
+    return blockedTemplate
+      .evaluate()
+      .setTitle('Brújula de Mentoría')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+  }
   const template = HtmlService.createTemplateFromFile('index');
   const whatsappPrefill = buildWhatsappLink_(
     CONFIG.WHATSAPP_LINK,
