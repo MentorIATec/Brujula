@@ -515,6 +515,18 @@
       color: var(--ink-500);
       line-height: 1.45;
     }
+    .office-callout {
+      margin: 12px auto 0;
+      max-width: 560px;
+      background: #ecfdf3;
+      border: 1px solid #99f6b8;
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #166534;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
     .data-note {
       margin-top: 12px;
       font-size: 12px;
@@ -785,13 +797,13 @@
             <div id="score-ring" class="score-ring" aria-label="Puntaje total"></div>
           </div>
           <p id="result-copy" class="result-copy-main"></p>
-          <a id="result-calendly-link" href="https://calendly.com/karenkrei/charla-1-a-1"
+          <a href="https://calendly.com/karenkrei/charla-1-a-1"
              target="_blank" rel="noopener noreferrer"
              class="mentor-cta"
              aria-label="Abrir Calendly para agendar sesión con tu mentora">
             Agenda tu sesión →
           </a>
-          <p class="office-note">Open Office todos los jueves, 9:30 a 16:00, Centrales Sur 3er piso. Avísame por WhatsApp antes de pasar.</p>
+          <p class="office-callout">O acude al Open Office: jueves 9:30 a 16:00, Centrales Sur 3er piso. Avísame por WhatsApp antes de pasar.</p>
           <p class="result-footnote">Te enviamos un resumen al correo.</p>
         </div>
 
@@ -854,7 +866,6 @@
     const whatsappLink     = <?= whatsappLinkJson ?>;
     const whatsappResultLink = <?= whatsappResultLinkJson ?>;
     const privacyPolicyUrl = <?= privacyPolicyUrlJson ?>;
-    const calendlyLink     = <?= calendlyLinkJson ?>;
 
     /* ── DOM REFS ── */
     const welcomeState      = document.getElementById('welcome-state');
@@ -887,7 +898,6 @@
     const modalCancelBtn    = document.getElementById('change-stage-cancel');
     const modalConfirmBtn   = document.getElementById('change-stage-confirm');
     const loadingWhatsappLink = document.getElementById('loading-whatsapp-link');
-    const resultCalendlyLink  = document.getElementById('result-calendly-link');
     const alreadyWhatsappLink = document.getElementById('already-whatsapp-link');
     const alreadyCalendlyLink = document.getElementById('already-calendly-link');
     const privacyLink         = document.getElementById('privacy-link');
@@ -913,9 +923,8 @@
     };
 
     if (loadingWhatsappLink) loadingWhatsappLink.href = whatsappResultLink || whatsappLink;
-    if (resultCalendlyLink) resultCalendlyLink.href = calendlyLink;
     if (alreadyWhatsappLink) alreadyWhatsappLink.href = whatsappResultLink || whatsappLink;
-    if (alreadyCalendlyLink) alreadyCalendlyLink.href = calendlyLink;
+    if (alreadyCalendlyLink) alreadyCalendlyLink.href = 'https://calendly.com/karenkrei/charla-1-a-1';
     if (privacyLink) privacyLink.href = privacyPolicyUrl;
 
     /* ── HERO GREETING ── */

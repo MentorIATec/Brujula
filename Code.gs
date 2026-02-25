@@ -187,7 +187,6 @@ function doGet(e) {
   template.whatsappLinkJson = JSON.stringify(CONFIG.WHATSAPP_LINK);
   template.whatsappResultLinkJson = JSON.stringify(whatsappPrefill);
   template.privacyPolicyUrlJson = JSON.stringify(CONFIG.PRIVACY_POLICY_URL);
-  template.calendlyLinkJson = JSON.stringify(CONFIG.CALENDLY_LINK);
 
   return template
     .evaluate()
