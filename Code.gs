@@ -9,7 +9,8 @@ const CONFIG = {
   CALENDLY_LINK: 'https://calendly.com/karenkrei/charla-1-a-1',
   OPEN_OFFICE_TEXT: 'Open Office todos los jueves, 9:30 a 16:00, en Centrales Sur 3er piso. Avísame por WhatsApp antes de pasar.',
   PRIVACY_POLICY_URL: 'https://tec.mx/es/aviso-de-privacidad-alumnos',
-  EMAIL_HEADER_IMAGE_URL: 'https://cdn.jsdelivr.net/gh/MentorIATec/Brujula@main/assets/image.png'
+  EMAIL_HEADER_IMAGE_URL: 'https://cdn.jsdelivr.net/gh/MentorIATec/Brujula@main/assets/image.png',
+  COMPASS_IMAGE_URL: 'https://cdn.jsdelivr.net/gh/MentorIATec/Brujula@main/assets/travel-compass-icon-isolated-design.png'
 };
 
 const STAGE_LABELS = {
@@ -17,7 +18,7 @@ const STAGE_LABELS = {
   enfoque: 'Enfoque'
 };
 const MAX_SUBMISSIONS_PER_EMAIL = 1;
-const STUDENT_TRACKING_HEADERS = ['Interacción CRM', 'reminder_count', 'invitation_sent_ts'];
+const STUDENT_TRACKING_HEADERS = ['Interacción CRM', 'reminder_count', 'invitation_sent_ts', 'followup_sent_ts'];
 
 const RESPONSE_HEADERS = [
   'submission_ts',
@@ -151,6 +152,8 @@ function onOpen() {
     .addItem('5. Ver Resumen Observabilidad V1', 'showObservabilitySummary')
     .addItem('6. Ver Resumen de Envíos', 'showDeliverySummary')
     .addItem('7. Poblar Campos Base (Students)', 'populateStudentsBaseFields')
+    .addSeparator()
+    .addItem('8. Enviar Seguimiento Brujula (Ya Respondieron)', 'sendFollowupEmailBrujula')
     .addToUi();
 }
 
@@ -1180,4 +1183,141 @@ function getResponseEmailColIndex_(headers) {
     }
   }
   return -1;
+}
+
+// ─── FOLLOWUP EMAIL ──────────────────────────────────────────────────────────
+
+const FOLLOWUP_GOAL_BANK = {
+  exploracion: {
+    Consolidado: [
+      { title: 'Entrevistar a 2 directores de programa en mi área de interés', step: 'Buscar correos esta semana y enviar mensajes de contacto.' },
+      { title: 'Crear un portafolio digital básico con 3 proyectos clave', step: 'Elegir una plataforma (GitHub o Behance) hoy y documentar el primer proyecto.' },
+      { title: 'Aplicar a 5 vacantes de prácticas profesionales en 3 semanas', step: 'Activar alertas en LinkedIn y la bolsa Tec, y enviar la primera aplicación esta semana.' }
+    ],
+    Desarrollo: [
+      { title: 'Subir mi promedio 0.5 puntos en una materia específica este parcial', step: 'Agendar asesoría con el profesor y formar un grupo de estudio esta semana.' },
+      { title: 'Crear un CV de alto impacto y perfil de LinkedIn estelar en 2 semanas', step: 'Tomar una foto profesional y pedir a 3 personas que revisen tu CV.' },
+      { title: 'Unirme a un grupo estudiantil y asistir a sus reuniones por 5 semanas', step: 'Investigar los grupos disponibles en el Tec y asistir a una reunión de prueba esta semana.' }
+    ],
+    Oportunidad: [
+      { title: 'Aplicar el método Cornell para tomar apuntes en todas mis clases por 4 semanas', step: 'Ver un tutorial de 10 min hoy y empezar en la próxima clase.' },
+      { title: 'Identificar 3 detonantes de estrés y crear un plan de acción para uno de ellos', step: 'Anotar situaciones estresantes esta semana y elegir el detonante más frecuente.' },
+      { title: 'Completar el reto de 10,000 pasos diarios por 30 días', step: 'Activar el contador de pasos de tu celular hoy.' }
+    ]
+  },
+  enfoque: {
+    Consolidado: [
+      { title: 'Aplicar a 15 posiciones de prácticas en empresas top-tier en 4 semanas', step: 'Identificar 10 empresas objetivo y personalizar tu CV para cada industria.' },
+      { title: 'Completar una micro-credencial digital del Tec', step: 'Explorar el catálogo de micro-credenciales y dedicar 10 horas semanales.' },
+      { title: 'Construir perfil LinkedIn All-Star con 200+ conexiones en 6 semanas', step: 'Asistir al taller CVDP de LinkedIn y conectar con 10 profesionales por semana.' }
+    ],
+    Desarrollo: [
+      { title: 'Optimizar presencia profesional con CVDP en 3 semanas', step: 'Agendar revisión de CV con AI esta semana y asistir a taller de LinkedIn.' },
+      { title: 'Organizar un panel de egresados para orientación Semestre Tec', step: 'Contactar a 5 egresados de tu carrera y reservar espacio esta semana.' },
+      { title: 'Completar programa Mindfulness Tec con certificación', step: 'Inscribirte al programa de 4 semanas y practicar 10 minutos diarios.' }
+    ],
+    Oportunidad: [
+      { title: 'Participar en talleres de Orientación Educativa para manejo de ansiedad', step: 'Agendar cita en Orientación Educativa esta semana.' },
+      { title: 'Inscribirme en un deporte representativo y asistir al 80% de entrenamientos', step: 'Elegir un deporte de interés y preguntar por los tryouts esta semana.' },
+      { title: 'Crear plan financiero detallado para gastos de graduación', step: 'Calcular costos de titulación y establecer una meta de ahorro mensual.' }
+    ]
+  }
+};
+
+function pickFollowupGoals_(stage, scenario) {
+  const stageKey = String(stage || 'exploracion').toLowerCase().trim();
+  const scenarioKey = String(scenario || 'Desarrollo').trim();
+  const stageBank = FOLLOWUP_GOAL_BANK[stageKey] || FOLLOWUP_GOAL_BANK['exploracion'];
+  const goals = stageBank[scenarioKey] || stageBank['Desarrollo'] || FOLLOWUP_GOAL_BANK['exploracion']['Desarrollo'];
+  return goals.slice(0, 3);
+}
+
+function logFollowupSent_(rowNumber) {
+  const sheet = SpreadsheetApp.openById(CONFIG.SHEET_ID).getSheetByName(CONFIG.STUDENTS_SHEET_NAME);
+  if (!sheet || !rowNumber) return;
+  ensureStudentTrackingHeaders_(sheet);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const idx = buildHeaderIndex_(headers);
+  const col = idx['followup_sent_ts'];
+  if (col) sheet.getRange(rowNumber, col).setValue(new Date());
+}
+
+function sendFollowupEmailBrujula() {
+  const ui = SpreadsheetApp.getUi();
+  const confirmation = ui.alert(
+    'Enviar Seguimiento Brujula',
+    'Se enviará el correo de seguimiento con metas a todos los estudiantes que ya respondieron y aún no lo han recibido. ¿Continuar?',
+    ui.ButtonSet.YES_NO
+  );
+  if (confirmation !== ui.Button.YES) {
+    ui.alert('Envio cancelado.');
+    return;
+  }
+
+  const students = getStudents_();
+  const responded = getRespondedEmails_();
+  const sheet = SpreadsheetApp.openById(CONFIG.SHEET_ID).getSheetByName(CONFIG.STUDENTS_SHEET_NAME);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  ensureStudentTrackingHeaders_(sheet);
+  const idx = buildHeaderIndex_(headers);
+  const followupCol = idx['followup_sent_ts'];
+
+  const targets = students.filter(function(student) {
+    if (!responded.has(student.email.toLowerCase())) return false;
+    if (followupCol) {
+      const sentTs = sheet.getRange(student.rowNumber, followupCol).getValue();
+      if (sentTs) return false;
+    }
+    return true;
+  });
+
+  if (targets.length === 0) {
+    ui.alert('Sin pendientes: todos los que respondieron ya recibieron el seguimiento, o nadie ha respondido aún.');
+    return;
+  }
+
+  let sent = 0;
+  targets.forEach(function(student) {
+    const stats = getResponseStatsByEmail_(student.email);
+    if (!stats.last) return;
+    const record = stats.last;
+    const firstName = (record.name || student.name || '').split(' ')[0] || 'Estudiante';
+    const stage = record.stage || 'exploracion';
+    const scenario = record.profile_scenario || 'Desarrollo';
+    const goals = pickFollowupGoals_(stage, scenario);
+    const whatsappLink = buildWhatsappLink_(
+      CONFIG.WHATSAPP_LINK,
+      'Hola Karen, quiero platicar sobre mis metas de la Brujula'
+    );
+
+    const htmlBody = renderEmailTemplate_('EmailFollowupBrujula', {
+      firstName: firstName,
+      scoreTotal: record.score_total || '—',
+      scenarioLabel: getScenarioLabel_(scenario),
+      stageLabel: record.stage_label || record.stage || 'Sin etapa',
+      goal1Title: goals[0].title,
+      goal1Step: goals[0].step,
+      goal2Title: goals[1].title,
+      goal2Step: goals[1].step,
+      goal3Title: goals[2].title,
+      goal3Step: goals[2].step,
+      calendlyLink: CONFIG.CALENDLY_LINK,
+      whatsappLink: whatsappLink,
+      whatsappDirectLink: CONFIG.WHATSAPP_LINK,
+      openOfficeText: CONFIG.OPEN_OFFICE_TEXT,
+      compassImageUrl: CONFIG.COMPASS_IMAGE_URL
+    });
+
+    MailApp.sendEmail({
+      to: student.email,
+      subject: firstName + ', tus 3 metas para este semestre están listas',
+      htmlBody: htmlBody
+    });
+
+    logFollowupSent_(student.rowNumber);
+    Utilities.sleep(400);
+    sent++;
+  });
+
+  ui.alert('Seguimiento enviado a ' + sent + ' estudiante(s).');
 }
